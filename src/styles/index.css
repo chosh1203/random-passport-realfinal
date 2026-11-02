@@ -1,0 +1,520 @@
+@import "tailwindcss";
+
+/* Japanese: EPSON 丸ゴシック体Ｍ / 太丸ゴシック体Ｂ when installed on the viewer's device
+   (they ship with Epson drivers and can't be redistributed), otherwise Zen Maru Gothic (OFL). */
+@font-face {
+  font-family: "RP Maru";
+  src: local("EPSON 丸ゴシック体Ｍ"), local("EPSON 丸ゴシック体M"), local("EPSON丸ゴシック体Ｍ"), local("EPSON-MARUGOTHIC-M");
+  font-weight: 100 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "RP Maru";
+  src: local("EPSON 太丸ゴシック体Ｂ"), local("EPSON 太丸ゴシック体B"), local("EPSON太丸ゴシック体Ｂ"), local("EPSON-FUTOMARUGOTHIC-B");
+  font-weight: 700 900;
+  font-display: swap;
+}
+
+/* Paperlogy (SIL OFL 1.1) — self-hosted, see public/fonts/OFL.txt */
+@font-face {
+  font-family: "Paperlogy";
+  src: url("/fonts/Paperlogy-4Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("/fonts/Paperlogy-5Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("/fonts/Paperlogy-6SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("/fonts/Paperlogy-7Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("/fonts/Paperlogy-8ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Paperlogy";
+  src: url("/fonts/Paperlogy-9Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * RANDOM PASSPORT — board-game edition.
+ * Concept: the site is a travel board game on a cream table. The navy of the
+ * original spec becomes the game board; cards are printed paper with ink
+ * outlines and hard offset shadows. No glows, no glass, no gradients on UI.
+ */
+@theme {
+  /* table + paper */
+  --color-bg: #efe6cf;
+  --color-surface: #fbf6e9;
+  --color-surface-light: #f2e9d2;
+  /* board */
+  --color-board: #1b3d72;
+  --color-board-deep: #122b53;
+  /* ink + text */
+  --color-ink: #1c1d21;
+  --color-mute: #4d4a41;
+  --color-dim: #7a7466;
+  --color-line: #1c1d21;
+  /* game colours */
+  --color-primary: #1f4f9c;
+  --color-cyan: #c93a26;
+  --color-red: #d4422c;
+  --color-yellow: #f2b630;
+  --color-green: #2f8a57;
+  --color-sky: #3d8fd9;
+  --color-gold: #c9962f;
+  --color-paper: #f1eadb;
+
+  /* One family everywhere — roles differ by weight and tracking only */
+  --font-sans: "Paperlogy", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --font-serif: "Paperlogy", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-display: "Paperlogy", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-mono: "Paperlogy", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  background: var(--color-bg);
+  color-scheme: light;
+}
+
+html:lang(ja) {
+  --font-sans: "RP Maru", "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Paperlogy", sans-serif;
+  --font-serif: "RP Maru", "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Paperlogy", sans-serif;
+  --font-display: "RP Maru", "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Paperlogy", sans-serif;
+  --font-mono: "RP Maru", "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Paperlogy", sans-serif;
+}
+/* Japanese: break between phrases, not inside them */
+html:lang(ja) body {
+  word-break: auto-phrase;
+  line-break: strict;
+  /* proportional kana for tighter, more natural Japanese setting */
+  font-feature-settings: "palt";
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  /* printed card-stock speckle */
+  background-image:
+    radial-gradient(rgba(28, 29, 33, 0.045) 1px, transparent 1.2px),
+    radial-gradient(rgba(28, 29, 33, 0.03) 1px, transparent 1.2px);
+  background-size: 7px 7px, 11px 11px;
+  background-position: 0 0, 3px 5px;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  /* Korean: break lines only between words, never inside one (모 / 르는) */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  line-break: strict;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--color-yellow);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-yellow);
+  outline-offset: 2px;
+}
+
+@layer components {
+  /* Type roles — all Paperlogy */
+  .font-display {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .font-serif {
+    font-weight: 900;
+    letter-spacing: -0.01em;
+  }
+  .font-mono {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Printed card: paper, ink outline, hard offset shadow */
+  .glass {
+    background: var(--color-surface);
+    border: 2px solid var(--color-ink);
+    border-radius: 10px;
+    box-shadow: 4px 4px 0 var(--color-ink);
+  }
+
+  .glass-soft {
+    background: var(--color-surface);
+    border: 1.5px solid var(--color-ink);
+    border-radius: 8px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--color-mute);
+  }
+
+  .hud-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-dim);
+  }
+
+  /* Big chunky game button — raised on a 5px ink "base" */
+  .btn-primary {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    border-radius: 12px;
+    padding: 15px 30px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.01em;
+    color: var(--color-ink);
+    background: var(--color-yellow);
+    border: 2.5px solid var(--color-ink);
+    box-shadow: 0 5px 0 var(--color-ink);
+    transform: translateY(0);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+    cursor: pointer;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #f6c34f;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 0 var(--color-ink);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 var(--color-ink);
+  }
+  .btn-primary:disabled {
+    cursor: default;
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 var(--color-ink);
+    background: #e9cf86;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 10px;
+    padding: 8px 15px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink);
+    border: 2px solid var(--color-ink);
+    background: var(--color-surface);
+    box-shadow: 0 3px 0 var(--color-ink);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+    cursor: pointer;
+  }
+  .btn-ghost:hover {
+    background: #fbe7ae;
+  }
+  .btn-ghost:active {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 var(--color-ink);
+  }
+
+  .nav-pill-active {
+    color: var(--color-ink) !important;
+    border-color: var(--color-ink) !important;
+    background: var(--color-yellow) !important;
+    box-shadow: 0 2px 0 var(--color-ink);
+  }
+
+  .text-glow {
+    text-shadow: none;
+  }
+
+  .paper {
+    background-color: #f4ecd9;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.6), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(180, 160, 120, 0.18), transparent 50%),
+      repeating-linear-gradient(0deg, rgba(120, 100, 70, 0.025) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(120, 100, 70, 0.02) 0 1px, transparent 1px 4px);
+  }
+  .paper-guilloche {
+    background-image:
+      repeating-radial-gradient(circle at 50% 120%, rgba(60, 110, 160, 0.07) 0 1px, transparent 1px 9px),
+      repeating-radial-gradient(circle at 50% -20%, rgba(60, 110, 160, 0.05) 0 1px, transparent 1px 11px);
+  }
+
+  /* Navy game-board surface with faint printed grid */
+  .board-surface {
+    background-color: var(--color-board);
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Ticket perforation edge */
+  .perforated {
+    background-image: radial-gradient(circle, var(--color-board) 5px, transparent 5.5px);
+    background-size: 16px 16px;
+    background-repeat: repeat-x;
+    background-position: -2px center;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(28, 29, 33, 0.35);
+    border-radius: 6px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Game board (home)                                                   */
+/* ------------------------------------------------------------------ */
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.4fr repeat(7, 1fr) 1.4fr;
+  grid-template-rows: 1.4fr repeat(7, 1fr) 1.4fr;
+  gap: 2px;
+  aspect-ratio: 1;
+  background: var(--color-ink);
+  border: 3px solid var(--color-ink);
+  border-radius: 14px;
+  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  min-width: 0;
+  min-height: 0;
+  transition: background 0.15s ease;
+}
+.tile[data-side="bottom"] { flex-direction: column; }
+.tile[data-side="top"] { flex-direction: column-reverse; }
+.tile[data-side="left"] { flex-direction: row-reverse; }
+.tile[data-side="right"] { flex-direction: row; }
+
+.tile-band {
+  flex: 0 0 21%;
+  border-color: var(--color-ink);
+  border-style: solid;
+  border-width: 0;
+}
+.tile[data-side="bottom"] .tile-band { border-bottom-width: 1.5px; }
+.tile[data-side="top"] .tile-band { border-top-width: 1.5px; }
+.tile[data-side="left"] .tile-band { border-left-width: 1.5px; }
+.tile[data-side="right"] .tile-band { border-right-width: 1.5px; }
+
+.tile-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35cqw;
+  padding: 0.4cqw;
+  text-align: center;
+}
+.tile-flag {
+  width: 3.2cqw;
+  height: 2.2cqw;
+  border-radius: 2px;
+  border: 1px solid var(--color-ink);
+  object-fit: cover;
+}
+.tile-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: clamp(7px, 1.32cqw, 14px);
+  line-height: 1.05;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.tile-code {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: clamp(6px, 0.95cqw, 11px);
+  letter-spacing: 0.06em;
+  color: var(--color-mute);
+}
+.tile[data-active="true"] { background: #fde6a3; }
+.tile[data-landed="true"] { background: var(--color-yellow); }
+.tile[data-landed="true"] .tile-name { text-decoration: underline 2px; text-underline-offset: 2px; }
+.tile-visited {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 1.5cqw;
+  height: 1.5cqw;
+  min-width: 7px;
+  min-height: 7px;
+  border-radius: 50%;
+  background: var(--color-red);
+  border: 1px solid var(--color-ink);
+}
+
+.corner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5cqw;
+  text-align: center;
+  padding: 0.6cqw;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: clamp(8px, 1.5cqw, 17px);
+  line-height: 1.1;
+  text-decoration: none;
+  transition: filter 0.15s ease;
+}
+.corner small {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: clamp(6px, 0.9cqw, 11px);
+  letter-spacing: 0.1em;
+}
+.corner svg {
+  width: 3.6cqw;
+  height: 3.6cqw;
+}
+a.corner:hover { filter: brightness(1.06); }
+
+.board-center {
+  grid-area: 2 / 2 / 9 / 9;
+  position: relative;
+  overflow: hidden;
+}
+
+@container (max-width: 560px) {
+  .cabin-label,
+  .tile-name,
+  .tile-code,
+  .corner small {
+    display: none;
+  }
+  .tile-flag {
+    width: 4.4cqw;
+    height: 3cqw;
+  }
+  .corner svg {
+    width: 5cqw;
+    height: 5cqw;
+  }
+}
+
+/* Dice */
+.die {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  border: 2.5px solid var(--color-ink);
+  box-shadow: 0 4px 0 var(--color-ink);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 6px;
+}
+.die span {
+  width: 8px;
+  height: 8px;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--color-ink);
+}
+.die .red {
+  background: var(--color-red);
+  width: 11px;
+  height: 11px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #ede3c9 0px, #f7f0de 200px, #ede3c9 400px);
+  background-size: 800px 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
