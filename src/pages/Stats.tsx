@@ -15,7 +15,7 @@ import {
   Stamp as StampIcon,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { PassportCover } from '../components/PassportCover'
 import { Stamp } from '../components/Stamp'
 import { TripModal } from '../components/StampModal'
@@ -222,38 +222,7 @@ export default function Stats() {
                   </div>
                 </div>
 
-                <div className="glass p-5 md:p-6">
-                  <h2 className="text-[16px] font-semibold">{tr('월별 여행 기록 추이', '月ごとの旅の記録')}</h2>
-                  <p className="text-[12px] text-dim">{tr('최근 6개월, 여행 기록 수', '直近6か月の旅の記録数')}</p>
-                  <div className="mt-4 h-[210px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.monthly} margin={{ top: 8, right: 4, left: -24, bottom: 0 }}>
-                        <CartesianGrid vertical={false} stroke="rgba(28,29,33,0.12)" />
-                        <XAxis dataKey="label" tick={{ fill: '#4d4a41', fontSize: 12 }} axisLine={{ stroke: '#1c1d21' }} tickLine={false} />
-                        <YAxis allowDecimals={false} tick={{ fill: '#7a7466', fontSize: 11 }} axisLine={false} tickLine={false} />
-                        <Tooltip cursor={{ fill: 'rgba(242,182,48,0.25)' }} content={<ChartTip unit={tr('회', '回')} />} />
-                        <Bar dataKey="count" name={tr('여행', '旅')} fill="#2a78d6" stroke="#1c1d21" strokeWidth={1.5} radius={[4, 4, 0, 0]} maxBarSize={34} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
 
-                <div className="glass p-5 md:p-6">
-                  <h2 className="text-[16px] font-semibold">{tr('방문 도시 목록', '訪れた街の一覧')}</h2>
-                  <ul className="mt-3 max-h-[260px] divide-y divide-line/50 overflow-y-auto pr-1 scrollbar-thin">
-                    {stats.cityList.map((c) => (
-                      <li key={c.destinationId}>
-                        <a href={`#/destination/${c.destinationId}`} className="flex items-center gap-3 py-2.5 text-[14px] transition hover:text-cyan">
-                          <Flag code={c.countryCode} className="h-3.5 w-5" />
-                          <span className="flex-1">
-                            {c.cityKo} <span className="text-dim">· {c.countryKo}</span>
-                          </span>
-                          <span className="font-mono text-[12px] text-mute">{c.visits}{tr('회', '回')}</span>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
 
                 {stats.latest && (
                   <button onClick={() => setSelected(stats.latest)} className="glass group relative overflow-hidden text-left">
