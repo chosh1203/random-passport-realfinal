@@ -5,8 +5,8 @@
  *    468 face landmarks — runs on-device, nothing is uploaded.
  * 2. Small mask canvases are drawn from the landmarks: skin, lips, brows,
  *    eyes, T-zone highlight and jaw contour.
- * 3. A WebGL shader warps the jawline inward (slimmer face, sharper V-line),
- *    smooths and brightens skin, lifts the T-zone, shades the jaw, tints the
+ * 3. A WebGL shader narrows the lower face as one smooth field (no dents),
+ *    soft-focuses and brightens skin, lifts the T-zone, sheer-tints the
  *    lips in the chosen personal-colour shade and deepens the brows.
  */
 
@@ -35,6 +35,8 @@ export const LIP_TONES: { id: LipTone; ko: string; ja: string; color: string }[]
 ]
 
 const STRENGTH: Record<Strength, number> = { soft: 0.5, mid: 0.8, strong: 1.05 }
+/** fraction the lower face is narrowed by */
+const SLIM_AMOUNT: Record<Strength, number> = { soft: 0.03, mid: 0.055, strong: 0.08 }
 
 /* ------------------------------------------------------------------ */
 /* face mesh loader                                                    */
@@ -121,19 +123,6 @@ const BROW_R = [300, 293, 334, 296, 336, 285, 295, 282, 283, 276]
 const EYE_L = [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246]
 const EYE_R = [263, 249, 390, 373, 374, 380, 381, 382, 362, 398, 384, 385, 386, 387, 388, 466]
 const T_ZONE = [151, 9, 8, 168, 6, 197, 195, 5]
-const JAW_L = [234, 93, 132, 58, 172, 136]
-const JAW_R = [454, 323, 361, 288, 397, 365]
-/** [left index, right index, weight] — the lower jaw moves most */
-const SLIM: [number, number, number][] = [
-  [93, 323, 0.3],
-  [132, 361, 0.65],
-  [58, 288, 1],
-  [172, 397, 1],
-  [136, 365, 0.8],
-  [150, 379, 0.5],
-  [149, 378, 0.3],
-]
-const MAX_CTRL = 16
 
 /* ------------------------------------------------------------------ */
 /* masks                                                               */
@@ -170,9 +159,10 @@ uniform vec2 uRes;          // output px
 uniform float uFace;        // 1 when a face was found and filter is on
 uniform float uK;           // strength
 uniform float uFaceW;       // face width in output px
-uniform vec2 uCtrl[${MAX_CTRL}];
-uniform vec2 uDisp[${MAX_CTRL}];
-uniform int uN;
+uniform vec2 uAxisO;        // eye-line centre (output px)
+uniform vec2 uAxisD;        // unit vector down the face
+uniform float uFaceH;       // eye line → chin, px
+uniform float uSlim;        // lower-face narrowing amount
 uniform vec3 uLip;
 uniform float uLipOn;
 
@@ -198,69 +188,82 @@ vec4 blurMask(sampler2D m, vec2 uv){
   return s;
 }
 
+vec3 softLight(vec3 b, vec3 l){
+  vec3 lo = 2.0*b*l + b*b*(1.0 - 2.0*l);
+  vec3 hi = sqrt(b)*(2.0*l - 1.0) + 2.0*b*(1.0 - l);
+  return mix(lo, hi, step(0.5, l));
+}
+
 void main(){
   vec2 uv = vUv;
   if (uFace < 0.5) { gl_FragColor = vec4(src(uv), 1.0); return; }
 
-  // backward warp: pull jaw content inward
+  // ---- face slimming: narrow the whole lower face smoothly toward its centre line
+  // (one continuous field, so the contour moves in as a whole — no dents)
   vec2 p = uv * uRes;
-  vec2 off = vec2(0.0);
-  float sig = uFaceW * 0.12;
-  for (int i = 0; i < ${MAX_CTRL}; i++) {
-    if (i >= uN) break;
-    vec2 d = p - (uCtrl[i] + uDisp[i]);
-    float w = exp(-dot(d, d) / (2.0 * sig * sig));
-    off += uDisp[i] * w;
-  }
-  vec2 wuv = (p - off) / uRes;
+  vec2 N = vec2(-uAxisD.y, uAxisD.x);
+  vec2 d = p - uAxisO;
+  float v = dot(d, uAxisD) / uFaceH;      // 0 at the eyes, 1 at the chin
+  float u = dot(d, N);
+  float au = abs(u);
+  float R = uFaceW * 0.5;
+  float wy = smoothstep(-0.15, 0.75, v) * (1.0 - smoothstep(1.1, 1.6, v));
+  float h = au * (1.0 - smoothstep(R, R * 2.0, au));
+  vec2 off = N * sign(u) * uSlim * wy * h;
+  // chin: a slight lift for a softer V-line
+  float chinW = exp(-(u * u) / (2.0 * pow(uFaceW * 0.22, 2.0)));
+  off += uAxisD * uSlim * 0.35 * uFaceH * smoothstep(0.6, 1.0, v) * (1.0 - smoothstep(1.05, 1.5, v)) * chinW;
+  vec2 wuv = (p + off) / uRes;
 
   vec4 ma = blurMask(uMaskA, wuv);
   vec4 mb = blurMask(uMaskB, wuv);
-  float skin = clamp(ma.r - ma.g - ma.b * 0.7 - mb.r, 0.0, 1.0);
+  float skin = clamp(ma.r - ma.g * 1.2 - ma.b - mb.r * 1.2, 0.0, 1.0);
+  float k = uK;
 
-  vec3 c = src(wuv);
+  vec3 orig = src(wuv);
+  vec3 c = orig;
 
-  // skin smoothing (edge-preserving)
-  vec2 r = vec2(uFaceW * 0.012) / uRes;
+  // ---- skin: edge-preserving soft focus, keeping a little fine texture
+  vec2 r = vec2(uFaceW * 0.016) / uRes;
   vec3 acc = c; float wsum = 1.0;
-  for (int i = 0; i < 12; i++) {
-    float a = float(i) * 0.5236;
-    float rad = (mod(float(i), 2.0) < 0.5) ? 1.0 : 2.0;
-    vec3 s = src(wuv + vec2(cos(a), sin(a)) * r * rad);
-    vec3 dc = s - c;
-    float w = exp(-dot(dc, dc) * 90.0);
-    acc += s * w; wsum += w;
+  vec3 near = c; float nsum = 1.0;
+  for (int i = 0; i < 16; i++) {
+    float ang = float(i) * 0.3927 + (mod(float(i), 2.0) * 0.2);
+    float rad = (i < 8) ? 0.5 : 1.0;
+    vec3 sm = src(wuv + vec2(cos(ang), sin(ang)) * r * rad * (1.0 + mod(float(i), 3.0) * 0.5));
+    vec3 dc = sm - c;
+    float w = exp(-dot(dc, dc) * 55.0);
+    acc += sm * w; wsum += w;
+    if (i < 8) { near += sm; nsum += 1.0; }
   }
-  vec3 smooth = acc / wsum;
-  c = mix(c, smooth, skin * 0.6 * min(uK, 0.9));
+  vec3 smoothC = acc / wsum;
+  vec3 detail = c - near / nsum;
+  vec3 skinC = smoothC + detail * 0.35;
+  c = mix(c, skinC, skin * min(0.55 + 0.25 * k, 0.85));
 
-  // brighten skin while keeping its warmth (a hint of pink, no grey)
-  float bright = skin * 0.15 * uK + 0.03 * uK;
-  vec3 lifted = c + (1.0 - c) * bright;
-  lifted = mix(lifted, lifted * vec3(1.02, 0.995, 1.0), skin * uK * 0.5);
+  // ---- brightening: luminous, slightly rosy skin (screen-like lift, keeps colour)
   float l0 = luma(c);
-  float l1 = luma(lifted);
-  // keep the original chroma so the face doesn't wash out
-  c = clamp(vec3(l1) + (c - vec3(l0)) * mix(1.0, l1 / max(l0, 0.05), 0.7), 0.0, 1.0);
+  float lift = skin * (0.10 + 0.12 * k) + 0.03 * k;
+  float l1 = 1.0 - (1.0 - l0) * (1.0 - lift);
+  c = clamp(c + (l1 - l0), 0.0, 1.0);
+  c = mix(c, c * vec3(1.025, 0.99, 1.0), skin * 0.6);
+  // gentle contrast softening on skin = the "glow"
+  c = mix(c, mix(vec3(luma(c)), c, 1.05) * 0.94 + 0.06, skin * 0.35 * k);
 
-  // T-zone highlight + warm jaw contour
-  float tz = mb.g * ma.r;
-  c = c + (1.0 - c) * tz * 0.17 * uK;
-  float ct = mb.b * ma.r * (1.0 - ma.g);
-  c = c * mix(vec3(1.0), vec3(0.91, 0.87, 0.84), ct * 0.6 * min(uK, 1.0));
+  // ---- T-zone: soft highlight only
+  c = c + (1.0 - c) * mb.g * ma.r * 0.09 * k;
 
-  // brows: darken the existing hairs (darker than the surrounding skin) with a warm brown,
-  // plus a light fill so sparse brows read clearly
+  // ---- brows: deepen existing hairs, natural brown
   float lc = luma(c);
-  float hair = smoothstep(0.015, 0.12, luma(smooth) - lc + 0.04);
-  float br = ma.b * (0.35 + 0.65 * hair);
-  c = c * mix(vec3(1.0), vec3(0.62, 0.53, 0.47), br * 0.9 * min(uK, 1.0));
+  float hair = smoothstep(0.015, 0.12, luma(smoothC) - lc + 0.04);
+  float br = ma.b * (0.3 + 0.7 * hair);
+  c = c * mix(vec3(1.0), vec3(0.70, 0.62, 0.56), br * 0.7 * min(k, 1.0));
 
-  // lips: keep the lip's own shading, take the chosen colour
+  // ---- lips: sheer tint (soft-light), keeps natural texture and shine
   float lp = ma.g * uLipOn;
-  float ll = luma(c);
-  vec3 tint = clamp(uLip * (0.45 + ll * 1.1) + (ll - luma(uLip)) * 0.25, 0.0, 1.0);
-  c = mix(c, tint, lp * 0.68);
+  vec3 tinted = softLight(c, uLip);
+  tinted = mix(tinted, tinted * (uLip / max(luma(uLip), 0.2)) * luma(tinted), 0.15);
+  c = mix(c, clamp(tinted, 0.0, 1.0), lp * 0.62);
 
   gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
 }`
@@ -367,7 +370,7 @@ export class BeautyRenderer {
       return t
     }
     this.tex = { src: mk(), a: mk(), b: mk() }
-    for (const n of ['uSrc', 'uMaskA', 'uMaskB', 'uCrop', 'uMirror', 'uRes', 'uFace', 'uK', 'uFaceW', 'uCtrl', 'uDisp', 'uN', 'uLip', 'uLipOn']) {
+    for (const n of ['uSrc', 'uMaskA', 'uMaskB', 'uCrop', 'uMirror', 'uRes', 'uFace', 'uK', 'uFaceW', 'uAxisO', 'uAxisD', 'uFaceH', 'uSlim', 'uLip', 'uLipOn']) {
       this.u[n] = gl.getUniformLocation(prog, n)
     }
     gl.uniform1i(this.u.uSrc, 0)
@@ -410,36 +413,15 @@ export class BeautyRenderer {
       gl.uniform1f(this.u.uK, k)
       gl.uniform1f(this.u.uFaceW, fw)
 
-      // slimming control points: move toward the face's vertical axis
-      const top = P[10]
+      // slimming axis: from the eye line down through the chin
+      const eyeC = { x: (P[33].x + P[263].x) / 2, y: (P[33].y + P[263].y) / 2 }
       const chin = P[152]
-      const axis = { x: chin.x - top.x, y: chin.y - top.y }
-      const alen = Math.hypot(axis.x, axis.y) || 1
-      const ax = { x: axis.x / alen, y: axis.y / alen }
-      const ctrl: number[] = []
-      const disp: number[] = []
-      const push = (c: Pt, d: Pt) => {
-        ctrl.push(c.x, c.y)
-        disp.push(d.x, d.y)
-      }
-      for (const [li, ri, w] of SLIM) {
-        for (const idx of [li, ri]) {
-          const c = P[idx]
-          // nearest point on the axis
-          const t = (c.x - top.x) * ax.x + (c.y - top.y) * ax.y
-          const onAxis = { x: top.x + ax.x * t, y: top.y + ax.y * t }
-          const v = { x: onAxis.x - c.x, y: onAxis.y - c.y }
-          const vl = Math.hypot(v.x, v.y) || 1
-          const mag = fw * 0.04 * w * k
-          push(c, { x: (v.x / vl) * mag, y: (v.y / vl) * mag })
-        }
-      }
-      // V-line: lift the chin a little
-      push(chin, { x: -ax.x * fw * 0.018 * k, y: -ax.y * fw * 0.018 * k })
-      const n = ctrl.length / 2
-      gl.uniform2fv(this.u.uCtrl, new Float32Array([...ctrl, ...new Array((MAX_CTRL - n) * 2).fill(0)]))
-      gl.uniform2fv(this.u.uDisp, new Float32Array([...disp, ...new Array((MAX_CTRL - n) * 2).fill(0)]))
-      gl.uniform1i(this.u.uN, n)
+      const ax = { x: chin.x - eyeC.x, y: chin.y - eyeC.y }
+      const fh = Math.hypot(ax.x, ax.y) || 1
+      gl.uniform2f(this.u.uAxisO, eyeC.x, eyeC.y)
+      gl.uniform2f(this.u.uAxisD, ax.x / fh, ax.y / fh)
+      gl.uniform1f(this.u.uFaceH, fh)
+      gl.uniform1f(this.u.uSlim, SLIM_AMOUNT[s.strength])
 
       const lip = LIP_TONES.find((t) => t.id === s.lip)
       gl.uniform1f(this.u.uLipOn, s.lip === 'none' ? 0 : 1)
@@ -505,8 +487,6 @@ export class BeautyRenderer {
     tz.fill()
     tz.globalAlpha = 1
 
-    line(ct, JAW_L, fw * 0.075)
-    line(ct, JAW_R, fw * 0.075)
 
     const a = this.imgA.data
     const b = this.imgB.data
