@@ -15,6 +15,7 @@
 - 일본어 글꼴: 기기에 EPSON 丸ゴシック体Ｍ / 太丸ゴシック体Ｂ가 설치돼 있으면 그 글꼴을, 없으면 Zen Maru Gothic(OFL, `@fontsource/zen-maru-gothic`)을 사용. EPSON 글꼴은 재배포 불가라 파일을 포함하지 않음
 - 기내 방송: 비행 중 탑승권 위 픽셀 아트 기내 장면에서 승무원 캐릭터가 대화창으로 안내 (`src/components/CabinScene.tsx`, 문구는 `src/lib/announce.ts`). 음성 없음
 - 도시 카드 지도: Natural Earth 1:50m(world-atlas, 퍼블릭 도메인)로 그린 위치 지도 — 국가 윤곽, 도시 핀, 공항이 떨어져 있으면 이동 점선 (`src/components/CityMap.tsx`). 도시 사진은 페이지 배경에 옅게 깔림
+- 여권 사진: 사진 업로드 또는 카메라 촬영 후 뷰티 보정(갸름한 얼굴·턱선, 피부 톤, T존, 눈썹, 퍼스널 컬러 립). 얼굴 인식은 MediaPipe Face Mesh(Apache-2.0, `public/mediapipe`에 포함)로 기기 안에서만 처리되고 사진은 localStorage에만 저장 (`src/lib/beauty.ts`, `src/components/PhotoPicker.tsx`)
 - 사운드: Web Audio로 합성한 주사위·말 이동·제트 엔진(이륙→순항→착륙)·도착 차임. 상단 스피커 버튼과 설정에서 끌 수 있음 (`src/lib/sound.ts`)
 
 ## 실행 방법

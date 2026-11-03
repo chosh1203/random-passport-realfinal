@@ -1,13 +1,15 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { BarChart3, BookOpen, BookX, ChevronLeft, ChevronRight, Globe2, MapPin, Plane, Stamp as StampIcon } from 'lucide-react'
+import { BarChart3, BookOpen, BookX, Camera, ChevronLeft, ChevronRight, Globe2, MapPin, Plane, Stamp as StampIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { PassportCover } from '../components/PassportCover'
+import { PhotoPicker } from '../components/PhotoPicker'
 import { Stamp } from '../components/Stamp'
 import { TripModal } from '../components/StampModal'
 import type { TripRecord } from '../data/types'
 import { useMediaQuery, useReducedMotion } from '../hooks/useStores'
 import { navigate } from '../hooks/useRoute'
 import { requestLaunch } from '../lib/launch'
+import { usePassportPhoto } from '../lib/photo'
 import { computeStats, formatDate, hashUnit } from '../lib/stats'
 import { useLang, useLocalizedTrips, useT } from '../i18n'
 
@@ -195,6 +197,8 @@ function PassportPage({
 
 function IdentityPage({ stats, trips }: { stats: ReturnType<typeof computeStats>; trips: TripRecord[] }) {
   const tr = useT()
+  const photo = usePassportPhoto()
+  const [picker, setPicker] = useState(false)
   const no = trips[0] ? `RP${Math.floor(hashUnit(trips[0].tripId) * 9_000_000 + 1_000_000)}` : 'RP0000000'
   const issue = stats.firstDate ? formatDate(stats.firstDate, 'stamp') : '— — —'
   const fields: [string, string][] = [
@@ -209,12 +213,41 @@ function IdentityPage({ stats, trips }: { stats: ReturnType<typeof computeStats>
   const mrz2 = `${no}<0RP${String(stats.countries).padStart(3, '0')}${String(stats.cities).padStart(3, '0')}${'<'.repeat(30)}`.slice(0, 44)
   return (
     <div className="flex h-full flex-col px-[7%] pb-[6%] pt-[11%]">
+      <PhotoPicker open={picker} onClose={() => setPicker(false)} />
       <div className="font-display text-[clamp(11px,1.4vw,14px)] font-semibold tracking-[0.3em] text-[#25456e]">PASSPORT · {tr('여권', '旅券')}</div>
       <div className="mt-[6%] flex gap-[6%]">
-        <div className="flex aspect-[0.78] w-[34%] shrink-0 flex-col items-center justify-center rounded-md border border-[#9fb3cc] bg-gradient-to-b from-[#dfe8f2] to-[#c7d6e7]">
-          <Plane className="h-1/3 w-1/3 -rotate-45 text-[#25456e]/70" />
-          <span className="mt-1 font-display text-[8px] tracking-[0.2em] text-[#25456e]/70">EXPLORER</span>
-        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setPicker(true)
+          }}
+          className="group relative flex aspect-[300/386] w-[34%] shrink-0 flex-col items-center justify-center overflow-hidden rounded-md border border-[#9fb3cc] bg-gradient-to-b from-[#dfe8f2] to-[#c7d6e7] transition hover:border-[#25456e] focus-visible:outline-offset-2"
+          aria-label={photo ? tr('여권 사진 바꾸기', '旅券の写真を変更') : tr('여권 사진 추가', '旅券の写真を追加')}
+        >
+          {photo ? (
+            <>
+              <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover [filter:saturate(0.8)_contrast(1.03)]" />
+              {/* laminate sheen + security print over the photo */}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-[#25456e]/15 mix-blend-soft-light" aria-hidden />
+              <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-[#1c1d21]/60 py-1 text-[clamp(8px,0.9vw,10px)] font-bold text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+                <Camera className="h-3 w-3" />
+                {tr('바꾸기', '変更')}
+              </span>
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 60 70" className="h-[46%] w-[46%] text-[#25456e]/45" aria-hidden>
+                <circle cx="30" cy="24" r="13" fill="currentColor" />
+                <path d="M4 70c2-17 13-25 26-25s24 8 26 25z" fill="currentColor" />
+              </svg>
+              <span className="mt-1.5 flex items-center gap-1 rounded-full border border-[#25456e]/50 bg-white/60 px-2 py-0.5 text-[clamp(8px,0.95vw,11px)] font-bold text-[#25456e] transition group-hover:bg-white">
+                <Camera className="h-3 w-3" />
+                {tr('사진 추가', '写真を追加')}
+              </span>
+            </>
+          )}
+        </button>
         <dl className="grid flex-1 grid-cols-1 content-start gap-[5px]">
           {fields.map(([k, v]) => (
             <div key={k}>

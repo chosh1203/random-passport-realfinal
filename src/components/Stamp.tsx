@@ -131,7 +131,19 @@ export function Stamp({
   const Icon = SYMBOLS[symbol] ?? Plane
   const country = trip.country.toUpperCase()
   const isRound = shape === 'circle' || shape === 'oval'
-  const ry = shape === 'oval' ? 54 : 58
+  /*
+   * Text must sit inside the inner ring. The top line's glyphs rise outward
+   * from its arc, the bottom line's glyphs rise inward from its arc, so the
+   * arcs are placed to keep both inside the band between the rings.
+   *   circle: rings r=74/66, dashed r=44  → top arc r=53, bottom arc r=60
+   *   oval:   rings 76×60 / 68×52         → top arc 52×40, bottom arc 58×46
+   */
+  const top = shape === 'oval' ? { rx: 52, ry: 40 } : { rx: 53, ry: 53 }
+  const bottom = shape === 'oval' ? { rx: 58, ry: 46 } : { rx: 60, ry: 60 }
+  const countrySize = country.length > 18 ? 8 : country.length > 12 ? 10 : 12.5
+  // keep long names inside the half-arc
+  const arcLen = Math.PI * ((top.rx + top.ry) / 2) * 0.86
+  const estWidth = country.length * (countrySize * 0.68 + 1.5)
   const pathId = `arc-${id}`
   const bottomId = `arcb-${id}`
   return (
@@ -148,15 +160,20 @@ export function Stamp({
       {isRound ? (
         <>
           <defs>
-            <path id={pathId} d={`M ${80 - 58} 80 A 58 ${ry} 0 0 1 ${80 + 58} 80`} />
-            <path id={bottomId} d={`M ${80 - 60} 80 A 60 ${ry + 2} 0 0 0 ${80 + 60} 80`} />
+            <path id={pathId} d={`M ${80 - top.rx} 80 A ${top.rx} ${top.ry} 0 0 1 ${80 + top.rx} 80`} />
+            <path id={bottomId} d={`M ${80 - bottom.rx} 80 A ${bottom.rx} ${bottom.ry} 0 0 0 ${80 + bottom.rx} 80`} />
           </defs>
-          <text fill={color} fontSize={country.length > 12 ? 10 : 13} fontWeight={700} letterSpacing="1.5" fontFamily="Paperlogy, sans-serif">
-            <textPath href={`#${pathId}`} startOffset="50%" textAnchor="middle">
+          <text fill={color} fontSize={countrySize} fontWeight={700} letterSpacing="1.5" fontFamily="Paperlogy, sans-serif">
+            <textPath
+              href={`#${pathId}`}
+              startOffset="50%"
+              textAnchor="middle"
+              {...(estWidth > arcLen ? { textLength: arcLen, lengthAdjust: 'spacingAndGlyphs' as const } : {})}
+            >
               {country}
             </textPath>
           </text>
-          <text fill={color} fontSize="9" fontWeight={600} letterSpacing="1" fontFamily="Paperlogy, sans-serif" dy="9">
+          <text fill={color} fontSize="9" fontWeight={600} letterSpacing="1" fontFamily="Paperlogy, sans-serif">
             <textPath href={`#${bottomId}`} startOffset="50%" textAnchor="middle">
               {formatDate(trip.visitedAt, 'stamp')}
             </textPath>
@@ -176,7 +193,17 @@ export function Stamp({
       <text x="80" y="100" textAnchor="middle" fill={color} fontSize="17" fontWeight={800} letterSpacing="2" fontFamily="Paperlogy, sans-serif">
         {trip.iataCode}
       </text>
-      <text x="80" y="111" textAnchor="middle" fill={color} fontSize="7.5" fontWeight={600} letterSpacing="1.2" fontFamily="Paperlogy, sans-serif">
+      <text
+        x="80"
+        y="111"
+        textAnchor="middle"
+        fill={color}
+        fontSize="7.5"
+        fontWeight={600}
+        letterSpacing="1.2"
+        fontFamily="Paperlogy, sans-serif"
+        {...(trip.city.length > 9 ? { textLength: 56, lengthAdjust: 'spacingAndGlyphs' as const } : {})}
+      >
         {trip.city.toUpperCase()}
       </text>
     </svg>
