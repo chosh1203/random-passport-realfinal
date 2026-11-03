@@ -85,10 +85,12 @@ export default function DestinationPage({ id }: { id?: string }) {
   return (
     <div className="relative isolate pb-24">
       {/* the city's photo, faint, behind the whole page */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-clip" aria-hidden>
         <div className="sticky top-0 h-[100svh]">
-          <SmartImage wiki={dest.heroImage.wiki} alt="" hue={dest.hue} width={1280} className="absolute inset-0 h-full w-full opacity-[0.22] saturate-[0.85]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-bg/30 via-bg/45 to-bg" />
+          <SmartImage wiki={dest.heroImage.wiki} alt="" hue={dest.hue} width={1920} className="absolute inset-0 h-full w-full opacity-[0.62]" />
+          {/* light cream veil keeps text readable while the photo stays clearly visible */}
+          <div className="absolute inset-0 bg-bg/25" />
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent to-bg/40" />
         </div>
       </div>
       {/* HERO — one city card: identity + slogan on the left, the photo filling the right.
@@ -360,7 +362,7 @@ export default function DestinationPage({ id }: { id?: string }) {
           </div>
         </section>
 
-        <div className="mt-16 flex flex-col items-center gap-4 text-center">
+        <div className="mt-16 flex flex-col items-center gap-4 text-center [text-shadow:0_0_8px_var(--color-bg),0_0_3px_var(--color-bg)]">
           <p className="text-mute">{tr('다음엔 어디로 가게 될까요?', '次はどこへ行くことになるでしょう?')}</p>
           <button className="btn-primary" onClick={launchAgain}>
             <Plane className="h-5 w-5 -rotate-45" /> TAKE ME SOMEWHERE UNKNOWN

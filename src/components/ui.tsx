@@ -165,7 +165,7 @@ export function Modal({ open, onClose, children, labelledBy, wide = false }: { o
 /* ---------------- Section heading ---------------- */
 export function SectionTitle({ en, ko, icon, action }: { en: string; ko: string; icon?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-4 flex items-end justify-between gap-3">
+    <div className="mb-4 flex items-end justify-between gap-3 [text-shadow:0_0_8px_var(--color-bg),0_0_3px_var(--color-bg),0_0_1px_var(--color-bg)]">
       <div className="flex items-center gap-3">
         {icon && <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-yellow text-ink">{icon}</span>}
         <div>
