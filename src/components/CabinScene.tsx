@@ -193,7 +193,7 @@ export function CabinScene({ text, speaker, flightNo, reduced }: { text: string;
   }, [reduced])
 
   return (
-    <div className="relative aspect-[16/7] w-full overflow-hidden rounded-xl border-[2.5px] border-ink bg-[#efe6cf] shadow-[6px_6px_0_rgba(0,0,0,0.35)] max-sm:aspect-[16/8]">
+    <div className="relative aspect-[16/7] w-full overflow-hidden rounded-xl border-[2.5px] border-ink bg-[#efe6cf] shadow-[6px_6px_0_rgba(0,0,0,0.35)] [container-type:size] max-sm:aspect-[16/8] lg:aspect-auto lg:h-full">
       {/* blurred cabin */}
       <canvas ref={bgRef} width={96} height={54} className="absolute inset-0 h-full w-full scale-[1.06] blur-[2px] brightness-[0.97]" style={{ imageRendering: 'pixelated' }} aria-hidden />
       <div className="absolute inset-0 bg-[#1c1d21]/10" aria-hidden />
@@ -203,7 +203,7 @@ export function CabinScene({ text, speaker, flightNo, reduced }: { text: string;
         ref={spriteRef}
         width={22}
         height={34}
-        className="absolute bottom-0 left-[4%] h-[92%] w-auto"
+        className="absolute bottom-0 left-[3%] h-[min(92cqh,40cqw)] w-auto"
         style={{ imageRendering: 'pixelated', aspectRatio: '22 / 34' }}
         animate={reduced ? undefined : { y: [0, -2, 0] }}
         transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
@@ -211,7 +211,7 @@ export function CabinScene({ text, speaker, flightNo, reduced }: { text: string;
       />
 
       {/* dialogue box */}
-      <div className="absolute bottom-[7%] left-[30%] right-[3%] max-sm:left-[33%]">
+      <div className="absolute bottom-[8%] left-[min(31%,calc(5%+60cqh))] right-[3%] max-sm:left-[33%]">
         <div className="relative rounded-[3px] border-[3px] border-ink bg-board p-[3px] shadow-[0_0_0_3px_#fbf6e9,0_0_0_6px_#1c1d21]">
           <div className="absolute -top-[15px] left-3 rounded-[2px] border-[3px] border-ink bg-yellow px-2 py-[1px] text-[11px] font-bold text-ink max-sm:text-[10px]">
             {speaker} · {flightNo}

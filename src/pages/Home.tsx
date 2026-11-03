@@ -280,7 +280,7 @@ export default function Home({ route }: { route: Route }) {
   const countries = new Set(trips.map((t) => t.countryCode)).size
 
   return (
-    <section className="board-surface min-h-[calc(100svh-67px)] text-paper">
+    <section className="board-surface min-h-[calc(100svh-67px)] text-paper" style={{ '--board': 'clamp(520px, min(calc(100svh - 115px), calc(100vw - 500px)), 900px)' } as React.CSSProperties}>
       <div className="mx-auto grid max-w-[1600px] gap-5 px-4 py-5 sm:gap-8 sm:py-6 md:px-8 lg:grid-cols-[minmax(320px,1fr)_auto] lg:items-center lg:gap-10">
         {/* ---------------- LEFT: copy / boarding pass ---------------- */}
         <div className="order-2 min-w-0 lg:order-1">
@@ -345,8 +345,8 @@ export default function Home({ route }: { route: Route }) {
                 </div>
               </motion.div>
             ) : (
-              <motion.div key={'pass-' + journeyId} initial={{ opacity: 0, y: 16, rotate: -1.5 }} animate={{ opacity: 1, y: 0, rotate: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.4 }}>
-                <div className="mb-6">
+              <motion.div key={'pass-' + journeyId} className="flex flex-col gap-4 lg:h-[var(--board)] lg:gap-3" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.4 }}>
+                <div className="min-h-0 lg:flex lg:max-h-[320px] lg:min-h-[150px] lg:flex-1">
                   <CabinScene
                     text={caption?.text ?? ''}
                     speaker={tr('객실 승무원', '客室乗務員')}
@@ -370,7 +370,7 @@ export default function Home({ route }: { route: Route }) {
                     setTimeout(() => start(), 0)
                   }}
                 />
-                <p className="mt-4 text-[12px] text-paper/60">{tr('※ 실제 항공 운항 경로가 아닌, 공항 좌표를 기반으로 한 가상 시각화입니다.', '※ 実際の航空路線ではなく、空港の座標をもとにした仮想の可視化です。')}</p>
+                <p className="shrink-0 text-[11px] text-paper/60">{tr('※ 실제 항공 운항 경로가 아닌, 공항 좌표를 기반으로 한 가상 시각화입니다.', '※ 実際の航空路線ではなく、空港の座標をもとにした仮想の可視化です。')}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -385,7 +385,7 @@ export default function Home({ route }: { route: Route }) {
         </div>
 
         {/* ---------------- RIGHT: the board ---------------- */}
-        <div ref={boardRef} className="order-1 mx-auto w-full max-w-[640px] scroll-mt-[76px] lg:order-2 lg:mx-0 lg:w-[min(calc(100svh-115px),calc(100vw-500px))] lg:min-w-[520px] lg:max-w-[900px]">
+        <div ref={boardRef} className="order-1 mx-auto w-full max-w-[640px] scroll-mt-[76px] lg:order-2 lg:mx-0 lg:w-[var(--board)] lg:max-w-none">
           <div className="board" aria-label={tr('RANDOM PASSPORT 보드판 — 28개 이색 도시', 'RANDOM PASSPORT ボード — 28のまだ知らない街')}>
             {/* corners */}
             <div className="corner bg-yellow" style={{ gridRow: 9, gridColumn: 9, position: 'relative' }}>
@@ -634,7 +634,7 @@ function BoardingPass({
   const status = arrived ? (ja ? '到着しました' : '도착 완료') : phase === 'flying' ? (ja ? '飛行中' : '비행 중') : ja ? '航路を作成中' : '항로 생성 중'
 
   return (
-    <div className="relative overflow-hidden rounded-xl border-[2.5px] border-ink bg-surface text-ink shadow-[6px_6px_0_rgba(0,0,0,0.35)]">
+    <div className="relative shrink-0 overflow-hidden rounded-xl border-[2.5px] border-ink bg-surface text-ink shadow-[6px_6px_0_rgba(0,0,0,0.35)]">
       <div className="flex items-center justify-between gap-3 border-b-[2.5px] border-ink bg-red px-4 py-2 text-paper sm:px-5 sm:py-2.5">
         <span className="font-display text-[16px] tracking-[0.02em] sm:text-[18px]">{ja ? '搭乗券' : '탑승권'} · BOARDING PASS</span>
         <span className="font-mono text-[13px] font-semibold tracking-[0.1em]">{flightNo}</span>
@@ -682,7 +682,7 @@ function BoardingPass({
               </button>
             ) : (
               <>
-                <span className="mr-auto self-center rotate-[-8deg] rounded-md border-[3px] border-red px-2 py-0.5 font-display text-[15px] text-red sm:hidden">ARRIVED</span>
+                <span className="mr-auto self-center rotate-[-8deg] rounded-md border-[3px] border-red px-2 py-0.5 font-display text-[15px] text-red sm:hidden [@media(min-width:1024px)_and_(max-height:880px)]:!inline-block">ARRIVED</span>
                 <a href={`#/destination/${dest.id}`} className="btn-ghost !bg-yellow">
                   {ja ? 'シティカードを見る' : '도시 카드 보기'} <ArrowRight className="h-4 w-4" />
                 </a>
@@ -699,7 +699,7 @@ function BoardingPass({
           </div>
         </div>
 
-        <div className="relative hidden border-dashed border-ink p-5 sm:block sm:w-[150px] sm:border-l-[2.5px]">
+        <div className="relative hidden border-dashed border-ink p-5 sm:block sm:w-[150px] sm:border-l-[2.5px] [@media(min-width:1024px)_and_(max-height:880px)]:!hidden">
           <dl className="grid grid-cols-3 gap-3 sm:grid-cols-1">
             {[
               ['DATE', date],
