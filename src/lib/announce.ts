@@ -1,12 +1,9 @@
 import type { ResolvedDestination } from '../data/types'
-import { settingsStore } from './storage'
-import { playPA } from './sound'
 import { hashUnit } from './stats'
 
 /**
- * In-flight cabin announcements: shown as captions over the globe and,
- * when sound is on, read aloud with the browser's speech synthesis
- * (Korean / Japanese voice). Everything degrades silently if unsupported.
+ * In-flight cabin announcements, shown as dialogue from the pixel-art
+ * flight attendant above the boarding pass. Text only — no voice, no chime.
  */
 export interface Announcement {
   /** flight progress (0–1) at which it plays; -1 = at boarding, 2 = on arrival */
@@ -57,51 +54,3 @@ export function buildAnnouncements(d: ResolvedDestination, lang: 'ko' | 'ja', km
   ]
 }
 
-function pickVoice(lang: 'ko' | 'ja') {
-  try {
-    const voices = window.speechSynthesis.getVoices()
-    return voices.find((v) => v.lang.toLowerCase().startsWith(lang)) ?? null
-  } catch {
-    return null
-  }
-}
-
-/** Chime, then read the line aloud (if sound is on and speech is available). */
-export function announce(text: string, lang: 'ko' | 'ja') {
-  if (!settingsStore.get().sound) return
-  playPA()
-  const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined
-  if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return
-  try {
-    // never let a backlog build up — the newest line wins
-    if (synth.pending || synth.speaking) synth.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    u.lang = lang === 'ja' ? 'ja-JP' : 'ko-KR'
-    const v = pickVoice(lang)
-    if (v) u.voice = v
-    u.rate = lang === 'ja' ? 1.05 : 1.08
-    u.pitch = 1.05
-    u.volume = 1
-    window.setTimeout(() => synth.speak(u), 420)
-  } catch {
-    /* speech unavailable */
-  }
-}
-
-export function stopAnnouncements() {
-  try {
-    window.speechSynthesis?.cancel()
-  } catch {
-    /* ignore */
-  }
-}
-
-// Some browsers load voices asynchronously — warm the list up early.
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  try {
-    window.speechSynthesis.getVoices()
-    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices()
-  } catch {
-    /* ignore */
-  }
-}

@@ -19,7 +19,9 @@ import {
   Sun,
   UtensilsCrossed,
 } from 'lucide-react'
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
+
+const CityMap = lazy(() => import('../components/CityMap'))
 import { Stamp } from '../components/Stamp'
 import { Flag, SectionTitle, SmartImage } from '../components/ui'
 import { CONTINENTS } from '../data/continents'
@@ -81,7 +83,14 @@ export default function DestinationPage({ id }: { id?: string }) {
   const extraAirports = dest.airports.slice(1).map(getAirport).filter(Boolean)
 
   return (
-    <div className="pb-24">
+    <div className="relative isolate pb-24">
+      {/* the city's photo, faint, behind the whole page */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+        <div className="sticky top-0 h-[100svh]">
+          <SmartImage wiki={dest.heroImage.wiki} alt="" hue={dest.hue} width={1280} className="absolute inset-0 h-full w-full opacity-[0.22] saturate-[0.85]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-bg/30 via-bg/45 to-bg" />
+        </div>
+      </div>
       {/* HERO — one city card: identity + slogan on the left, the photo filling the right.
           Facts that have their own sections below (currency, language, season…) are not repeated here. */}
       <section className="mx-auto max-w-[1280px] px-5 pt-6 md:px-10">
@@ -133,11 +142,13 @@ export default function DestinationPage({ id }: { id?: string }) {
             </dl>
           </div>
 
-          {/* photo — fills the full height of the card */}
-          <div className="relative min-h-[300px] border-t-[2.5px] border-ink lg:min-h-[480px] lg:border-l-[2.5px] lg:border-t-0">
-            <SmartImage wiki={dest.heroImage.wiki} alt={dest.city} hue={dest.hue} width={1280} className="absolute inset-0 h-full w-full" label={dest.city} />
-            <div className="absolute bottom-3 left-3 rounded-md border-2 border-ink bg-surface px-2.5 py-1 font-mono text-[11px] font-semibold tracking-[0.12em] text-ink">
-              GREETINGS FROM {dest.city.toUpperCase()}
+          {/* location map — fills the full height of the card */}
+          <div className="relative min-h-[300px] overflow-hidden border-t-[2.5px] border-ink bg-[#3d8fd9] lg:min-h-[480px] lg:border-l-[2.5px] lg:border-t-0">
+            <Suspense fallback={<div className="skeleton absolute inset-0" />}>
+              <CityMap dest={dest} airportLabel={`${dest.iataCode} ${tr('공항', '空港')}`} />
+            </Suspense>
+            <div className="absolute left-3 top-3 rounded-md border-2 border-ink bg-surface px-2.5 py-1 font-mono text-[11px] font-semibold tracking-[0.12em] text-ink">
+              LOCATION · {Math.abs(dest.latitude).toFixed(2)}°{dest.latitude >= 0 ? 'N' : 'S'} {Math.abs(dest.longitude).toFixed(2)}°{dest.longitude >= 0 ? 'E' : 'W'}
             </div>
           </div>
         </motion.article>

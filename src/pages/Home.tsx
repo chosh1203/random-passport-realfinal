@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowRight, BarChart3, BookOpen, Loader2, Megaphone, Plane, RotateCcw, SkipForward, Stamp as StampIcon } from 'lucide-react'
+import { ArrowRight, BarChart3, BookOpen, Loader2, Plane, RotateCcw, SkipForward, Stamp as StampIcon } from 'lucide-react'
 import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { Flag, Logo, MiniEarth } from '../components/ui'
@@ -15,7 +15,8 @@ import { playArrival, playDice, playHop, startEngine, unlockAudio, type EngineHa
 import { hashUnit, sortByDateDesc } from '../lib/stats'
 import { newTripId, travelStore } from '../lib/storage'
 import { makeTrip } from '../lib/trips'
-import { announce, buildAnnouncements, flightNumber, stopAnnouncements, type Announcement } from '../lib/announce'
+import { buildAnnouncements, flightNumber, type Announcement } from '../lib/announce'
+import { CabinScene } from '../components/CabinScene'
 import { airportLocalName, localizeDestination, originCityName, useLang, useT, type Lang } from '../i18n'
 
 const GlobeScene = lazy(() => import('../globe/GlobeScene').then((m) => ({ default: memo(m.default) })))
@@ -108,11 +109,7 @@ export default function Home({ route }: { route: Route }) {
       playArrival()
       const last = script.current.find((a) => a.at === 2)
       nextLine.current = script.current.length
-      if (last) {
-        stopAnnouncements()
-        setCaption({ key: Date.now(), text: last.text })
-        window.setTimeout(() => announce(last.text, langRef.current), 1600)
-      }
+      if (last) setCaption({ key: Date.now(), text: last.text })
     }
     if (progressBar.current) progressBar.current.style.width = '100%'
     if (progressPlane.current) progressPlane.current.style.left = '100%'
@@ -131,7 +128,6 @@ export default function Home({ route }: { route: Route }) {
       nextLine.current = 1
       const first = script.current[0]
       setCaption({ key: Date.now(), text: first.text })
-      announce(first.text, langRef.current)
       if (webglFailed) {
         timers.current.push(
           window.setTimeout(() => {
@@ -164,7 +160,6 @@ export default function Home({ route }: { route: Route }) {
     setAutoAdvance(true)
     setLanded(null)
     setCaption(null)
-    stopAnnouncements()
     setPhase('selecting')
     if (progressBar.current) progressBar.current.style.width = '0%'
     if (progressPlane.current) progressPlane.current.style.left = '0%'
@@ -248,7 +243,6 @@ export default function Home({ route }: { route: Route }) {
     if (line && line.at <= 1 && p >= line.at) {
       nextLine.current += 1
       setCaption({ key: Date.now(), text: line.text })
-      announce(line.text, langRef.current)
     }
     const pct = `${(p * 100).toFixed(1)}%`
     if (progressBar.current) progressBar.current.style.width = pct
@@ -262,7 +256,6 @@ export default function Home({ route }: { route: Route }) {
       return
     }
     engine.current?.throttleUp()
-    stopAnnouncements()
     nextLine.current = script.current.length - 1
     setPhase('flying')
     setSkipToken((n) => n + 1)
@@ -353,6 +346,14 @@ export default function Home({ route }: { route: Route }) {
               </motion.div>
             ) : (
               <motion.div key={'pass-' + journeyId} initial={{ opacity: 0, y: 16, rotate: -1.5 }} animate={{ opacity: 1, y: 0, rotate: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.4 }}>
+                <div className="mb-6">
+                  <CabinScene
+                    text={caption?.text ?? ''}
+                    speaker={tr('객실 승무원', '客室乗務員')}
+                    flightNo={flightNumber(journeyId ?? '')}
+                    reduced={reduced}
+                  />
+                </div>
                 <BoardingPass
                   dest={destL!}
                   lang={lang}
@@ -469,28 +470,6 @@ export default function Home({ route }: { route: Route }) {
                   </span>
                 </div>
               )}
-
-              {/* cabin announcement captions */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-[4%] flex justify-center px-[6%]" aria-live="polite">
-                <AnimatePresence mode="wait">
-                  {caption && inJourney && (
-                    <motion.div
-                      key={caption.key}
-                      className="flex max-w-full items-start gap-2 rounded-lg border-2 border-ink bg-surface px-3 py-2 text-ink shadow-[3px_3px_0_var(--color-ink)]"
-                      initial={{ y: 10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -6, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-red" strokeWidth={2.4} />
-                      <div className="min-w-0">
-                        <div className="cabin-label font-mono text-[10px] font-semibold tracking-[0.14em] text-mute">{tr('기내 방송', '機内放送')} · CABIN</div>
-                        <div className="text-[clamp(11px,1.9cqw,15px)] font-semibold leading-snug">{caption.text}</div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
 
               {/* top tag */}
               <div className="pointer-events-none absolute inset-x-0 top-[4%] flex justify-center px-3">

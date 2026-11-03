@@ -13,6 +13,8 @@
 - 글꼴: 페이퍼로지(Paperlogy) 한 가지로 통일, `public/fonts`에 직접 포함 (SIL OFL 1.1, `public/fonts/OFL.txt`). 한글은 어절 단위로만 줄바꿈(`word-break: keep-all`)
 - 언어: 한국어 / 日本語 전환 (상단 토글·설정). 화면 문구는 `src/i18n`, 도시 콘텐츠 일본어는 `src/data/destinations.ja.ts`
 - 일본어 글꼴: 기기에 EPSON 丸ゴシック体Ｍ / 太丸ゴシック体Ｂ가 설치돼 있으면 그 글꼴을, 없으면 Zen Maru Gothic(OFL, `@fontsource/zen-maru-gothic`)을 사용. EPSON 글꼴은 재배포 불가라 파일을 포함하지 않음
+- 기내 방송: 비행 중 탑승권 위 픽셀 아트 기내 장면에서 승무원 캐릭터가 대화창으로 안내 (`src/components/CabinScene.tsx`, 문구는 `src/lib/announce.ts`). 음성 없음
+- 도시 카드 지도: Natural Earth 1:50m(world-atlas, 퍼블릭 도메인)로 그린 위치 지도 — 국가 윤곽, 도시 핀, 공항이 떨어져 있으면 이동 점선 (`src/components/CityMap.tsx`). 도시 사진은 페이지 배경에 옅게 깔림
 - 사운드: Web Audio로 합성한 주사위·말 이동·제트 엔진(이륙→순항→착륙)·도착 차임. 상단 스피커 버튼과 설정에서 끌 수 있음 (`src/lib/sound.ts`)
 
 ## 실행 방법
